@@ -41,15 +41,15 @@ if __name__ == '__main__':
     Ixz = 1                                                         # mass moment of inertia xz axis
 
     # Part 1.2 Retrieve formatted vehicle object
-    vehicle = Vehicle.Vehicle(M, gamma, cbar, span, sref, xref, yref, zref, m, filename, compression, expansion, Ixx, Iyy, Izz, Ixz)
-
-    # Part 2 - Using SHABP - here we go!!!!
-    # Basic Run:
-    # Here are your orientation angles for the vehicle. how good.
-    alpha = 0
-    beta  = 0
-
-    [cp, cx, cy, cz, cmx, cmy, cmz, cl, cd, cyPrime] = Shabpy.RunSHABPy(alpha, beta, vehicle)
+    # vehicle = Vehicle.Vehicle(M, gamma, cbar, span, sref, xref, yref, zref, m, filename, compression, expansion, Ixx, Iyy, Izz, Ixz)
+    #
+    # # Part 2 - Using SHABP - here we go!!!!
+    # # Basic Run:
+    # # Here are your orientation angles for the vehicle. how good.
+    # alpha = 0
+    # beta  = 0
+    #
+    # [cp, cx, cy, cz, cmx, cmy, cmz, cl, cd, cyPrime] = Shabpy.RunSHABPy(alpha, beta, vehicle)
     # coefficients returned:
     # cp  - Panel pressures
     # cx  - x axis coefficient
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     # cy' - side force coefficient
 
     # Part 2.1 SANITY CHECKING (plot pressure map)
-    SHABPPlots.PlotPressureMap(cp, vehicle.mesh)
+    #SHABPPlots.PlotPressureMap(cp, vehicle.mesh)
 
     # Part 2.2 ooooh mama time to plot some coefficients
     # Panel Methods;
@@ -73,32 +73,32 @@ if __name__ == '__main__':
     # 4 - Hankey (I don't recommend this its garbage)
     # 5 - Van Dyke
     # 6 - Busemann Second Order Theory
-    methods = [1, 2]                                                    # These are the panel methods to compare / use (1 - 6)
-    aoa     = np.array([-15, -10, -5, 0, 5, 10, 15]) * np.pi / 180      # angle of attacks to check (radians of course, always radians)
-
-    # set up empty arrays - gotta fill these things for results
-    cx      = numpy.zeros((len(methods), len(aoa)))
-    cy      = numpy.zeros((len(methods), len(aoa)))
-    cz      = numpy.zeros((len(methods), len(aoa)))
-    cmx     = numpy.zeros((len(methods), len(aoa)))
-    cmy     = numpy.zeros((len(methods), len(aoa)))
-    cmz     = numpy.zeros((len(methods), len(aoa)))
-    cl      = numpy.zeros((len(methods), len(aoa)))
-    cd      = numpy.zeros((len(methods), len(aoa)))
-    cyPrime = numpy.zeros((len(methods), len(aoa)))
-
-    # collecting the results
-    for i in range(len(methods)):
-        vehicle.UpdatePanelMethod(methods[i])
-        for j in range(len(aoa)):
-            [cp, cx[i, j], cy[i, j], cz[i, j], cmx[i, j], cmy[i, j], cmz[i, j], cl[i, j], cd[i, j], cyPrime[i, j]] = Shabpy.RunSHABPy(aoa[j], 0, vehicle)
-
-    # plot information.
-    xlabel = 'Angle of Attack (degrees)'
-    ylabel = 'Coefficient of Lift'
-    title  = 'CL v AoA'
-    legend_text = ['Newtownian', 'Newtonian Prandyl Meyer']
-    SHABPPlots.PlotXY(aoa*180/np.pi, cl, xlabel, ylabel, legend_text, title)
+    # methods = [1, 2]                                                    # These are the panel methods to compare / use (1 - 6)
+    # aoa     = np.array([-15, -10, -5, 0, 5, 10, 15]) * np.pi / 180      # angle of attacks to check (radians of course, always radians)
+    #
+    # # set up empty arrays - gotta fill these things for results
+    # cx      = numpy.zeros((len(methods), len(aoa)))
+    # cy      = numpy.zeros((len(methods), len(aoa)))
+    # cz      = numpy.zeros((len(methods), len(aoa)))
+    # cmx     = numpy.zeros((len(methods), len(aoa)))
+    # cmy     = numpy.zeros((len(methods), len(aoa)))
+    # cmz     = numpy.zeros((len(methods), len(aoa)))
+    # cl      = numpy.zeros((len(methods), len(aoa)))
+    # cd      = numpy.zeros((len(methods), len(aoa)))
+    # cyPrime = numpy.zeros((len(methods), len(aoa)))
+    #
+    # # collecting the results
+    # for i in range(len(methods)):
+    #     vehicle.UpdatePanelMethod(methods[i])
+    #     for j in range(len(aoa)):
+    #         [cp, cx[i, j], cy[i, j], cz[i, j], cmx[i, j], cmy[i, j], cmz[i, j], cl[i, j], cd[i, j], cyPrime[i, j]] = Shabpy.RunSHABPy(aoa[j], 0, vehicle)
+    #
+    # # plot information.
+    # xlabel = 'Angle of Attack (degrees)'
+    # ylabel = 'Coefficient of Lift'
+    # title  = 'CL v AoA'
+    # legend_text = ['Newtownian', 'Newtonian Prandyl Meyer']
+    # SHABPPlots.PlotXY(aoa*180/np.pi, cl, xlabel, ylabel, legend_text, title)
 
     # Part 3 Viscous Analysis if time permits. this may make your laptop sound like it is going to explode.
     # SWITCH TO LMA.stl for this part!!!!!
@@ -114,32 +114,32 @@ if __name__ == '__main__':
     # meshproc.GetPointEdgeFace(vehicle.mesh)
 
     # load in your pickle file with all your mesh processing info.
-    data = pickle.load(open('lma_faces.pkl', 'rb'))
-    face_adj = data.faces                               # Object containing face adjacencys to streamline trace
-    vertices = data.points                              # Verticies on the Mesh
-    edges    = data.edges                               # Edges on the mesh - defined by vertex indices
-    normal   = vehicle.mesh.get_unit_normals()          # normal vectors of each panel
-    V        = np.array([1, 0, 0])                      # basic airstream vector (aoa = 0, beta = 0)
-    desc = np.cross(np.cross(V, normal), normal)        # airstream descent vectors for each panel
-    # SANITY CHECKING - Important - Lengthy (potentially).
-    # our viscous analysis depends on the streamline length to the panel from a leading edge.
-    Ls = vc.StreamlineTrace(vehicle.mesh, face_adj, edges, V, vertices, desc)
-    # Plot will heatmap your streamline length
-    SHABPPlots.PlotPressureMap(Ls, vehicle.mesh)
-
-    # Gathering Viscous Correction Data
-    # oooooooh yeeeeah getting serious now
-    cfd = np.zeros((1, len(aoa)))
-    cfy = np.zeros((1, len(aoa)))
-    cfl = np.zeros((1, len(aoa)))
-
-    for i in range(len(aoa)):
-        V   = vc.GetAirflowVector(aoa[i], 0)
-        cfd[i], cfy[i], cfl[i] = vc.RetrieveCoefficient(vehicle.mesh, face_adj, edges, V, vertices, desc, T_inf, mu, vehicle.M, vehicle.sref, speed, rho, normal, Rey)
-
-        # plot information.
-        xlabel = 'Angle of Attack (degrees)'
-        ylabel = 'Viscous Coefficient of Lift'
-        title = 'CLf v AoA'
-        legend_text = ['CL_f']
-        SHABPPlots.PlotXY(aoa * 180 / np.pi, cfl, xlabel, ylabel, legend_text, title)
+    # data = pickle.load(open('lma_faces.pkl', 'rb'))
+    # face_adj = data.faces                               # Object containing face adjacencys to streamline trace
+    # vertices = data.points                              # Verticies on the Mesh
+    # edges    = data.edges                               # Edges on the mesh - defined by vertex indices
+    # normal   = vehicle.mesh.get_unit_normals()          # normal vectors of each panel
+    # V        = np.array([1, 0, 0])                      # basic airstream vector (aoa = 0, beta = 0)
+    # desc = np.cross(np.cross(V, normal), normal)        # airstream descent vectors for each panel
+    # # SANITY CHECKING - Important - Lengthy (potentially).
+    # # our viscous analysis depends on the streamline length to the panel from a leading edge.
+    # Ls = vc.StreamlineTrace(vehicle.mesh, face_adj, edges, V, vertices, desc)
+    # # Plot will heatmap your streamline length
+    # SHABPPlots.PlotPressureMap(Ls, vehicle.mesh)
+    #
+    # # Gathering Viscous Correction Data
+    # # oooooooh yeeeeah getting serious now
+    # cfd = np.zeros((1, len(aoa)))
+    # cfy = np.zeros((1, len(aoa)))
+    # cfl = np.zeros((1, len(aoa)))
+    #
+    # for i in range(len(aoa)):
+    #     V   = vc.GetAirflowVector(aoa[i], 0)
+    #     cfd[i], cfy[i], cfl[i] = vc.RetrieveCoefficient(vehicle.mesh, face_adj, edges, V, vertices, desc, T_inf, mu, vehicle.M, vehicle.sref, speed, rho, normal, Rey)
+    #
+    #     # plot information.
+    #     xlabel = 'Angle of Attack (degrees)'
+    #     ylabel = 'Viscous Coefficient of Lift'
+    #     title = 'CLf v AoA'
+    #     legend_text = ['CL_f']
+    #     SHABPPlots.PlotXY(aoa * 180 / np.pi, cfl, xlabel, ylabel, legend_text, title)
